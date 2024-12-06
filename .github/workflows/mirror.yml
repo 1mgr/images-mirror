@@ -6,11 +6,21 @@ on:
       image_name:
         description: 'Docker image name (e.g., myorg/myimage:tag)'
         required: true
+      id:
+        description: 'Job id to identify workflow' # https://stackoverflow.com/a/69500478/3443964
+        required: false
 
 env:
   REGISTRY: ghcr.io
 
 jobs:
+  id:
+    name: Workflow ID Provider
+    runs-on: ubuntu-latest
+    steps:
+      - name: ${{github.event.inputs.id}}
+        run: echo run identifier ${{ inputs.id }}
+
   publish-to-ghcr:
     runs-on: ubuntu-latest
     permissions:
