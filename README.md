@@ -1,2 +1,3 @@
-# image-mirrors
-dynamic image mirror
+# image-mirror
+
+Dynamic dockerhub images mirror.
