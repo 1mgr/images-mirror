@@ -18,6 +18,14 @@ jobs:
       packages: write
 
     steps:
+      - name: Validate image
+        run: |
+          IMAGE="${{ github.event.inputs.image_name }}"
+          if [[ "$IMAGE" == *.* ]]; then
+            echo "Image name contains a domain, exiting. Only short dockerhub image names are allowed"
+            exit 1
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -33,13 +41,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Validate image
-        run: |
-          IMAGE="${{ github.event.inputs.image_name }}"
-          if [[ "$IMAGE" == *.* ]]; then
-            echo "Image name contains a domain, exiting. Only short dockerhub image names are allowed"
-            exit 1
-          fi
       - name: Copy image to GHCR
         env:
           IMAGE: ${{ github.event.inputs.image_name }}
