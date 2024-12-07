@@ -9,6 +9,8 @@ Or just run the following command:
 ```bash
 # put your image name and tag, for example alpine:3.21.0
 curl -NL 1mgr.xyz/<image:tag>
+# or
+wget -qO- 1mgr.xyz/<image:tag>
 ```
 
 ## Usage demo
