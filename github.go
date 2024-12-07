@@ -174,6 +174,9 @@ func (g *GitHubClient) FollowWorkflowRun(sw StatusWriter, id string) error {
 					break
 				}
 			}
+			if workflowID != "" {
+				break
+			}
 		}
 	}
 
