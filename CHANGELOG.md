@@ -1,3 +1,9 @@
+## v0.2.2 (2024-12-07)
+
+### Fix
+
+- locating workflow job_url
+
 ## v0.2.1 (2024-12-07)
 
 ### Fix
