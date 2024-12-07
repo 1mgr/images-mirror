@@ -48,7 +48,10 @@ func main() {
 
 func (server *Server) MirrorImageHandler(w http.ResponseWriter, req *http.Request) {
 	query := req.URL.Path
-	sourceIP := req.RemoteAddr
+	sourceIP := req.Header.Get("CF-Connecting-IP")
+	if sourceIP == "" {
+		sourceIP = req.RemoteAddr
+	}
 	log.Printf("Received request: query=%s, sourceIP=%s\n", query, sourceIP)
 
 	userAgent := strings.ToLower(req.Header.Get("User-Agent"))
