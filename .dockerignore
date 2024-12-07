@@ -1,0 +1,7 @@
+.git
+.env
+.github
+.vscode
+LICENSE
+README.md
+*_test.go
