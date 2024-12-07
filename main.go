@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rand"
 	"fmt"
+	"log"
 	"math/big"
 	"net/http"
 	"os"
@@ -21,13 +22,13 @@ func main() {
 
 	err := godotenv.Load()
 	if err != nil {
-		fmt.Println("Error loading .env file")
+		log.Println("Error loading .env file")
 	}
 	r := chi.NewRouter()
 
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
-		fmt.Println("GITHUB_TOKEN is required")
+		log.Println("GITHUB_TOKEN is required")
 		os.Exit(1)
 	}
 
@@ -46,6 +47,16 @@ func main() {
 }
 
 func (server *Server) MirrorImageHandler(w http.ResponseWriter, req *http.Request) {
+	query := req.URL.Path
+	sourceIP := req.RemoteAddr
+	log.Printf("Received request: query=%s, sourceIP=%s\n", query, sourceIP)
+
+	userAgent := strings.ToLower(req.Header.Get("User-Agent"))
+	if !strings.Contains(userAgent, "curl") && !strings.Contains(userAgent, "wget") {
+		http.Redirect(w, req, "https://github.com/1mgr/image-mirrors", http.StatusFound)
+		return
+	}
+
 	image := strings.TrimPrefix(req.URL.Path, "/")
 	if image == "" {
 		httpError(w, 400, "image not passed")
