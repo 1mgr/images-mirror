@@ -36,6 +36,7 @@ func main() {
 		gh: NewGitHubClient(nil, GithubClientConfig{
 			Token:         token,
 			OrgRepo:       "1mgr/images-mirror",
+			Org:           "1mgr",
 			Timeout:       30 * time.Second,
 			CheckInterval: 1 * time.Second,
 		}),
@@ -80,20 +81,28 @@ func (server *Server) MirrorImageHandler(w http.ResponseWriter, req *http.Reques
 		httpError(w, http.StatusBadRequest, fmt.Sprintf("❌ Image not found in dockerhub: %s", image))
 		return
 	}
-	id := randID()
-	err := server.gh.LaunchGithubAction(image, id)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, fmt.Sprintf("❌ Failed to launch GitHub action: %v", err))
-		return
-	}
-	writeLine(w, "🚀 Launched github action workflow")
-	if err := server.gh.FollowWorkflowRun(makeStatusWriter(w), id); err != nil {
-		httpError(w, http.StatusInternalServerError, fmt.Sprintf("❌ Failed to follow workflow run: %v", err))
-		return
+	if mirrored, lastMirrorSince := server.gh.IsImageAlreadyMirrored(image); mirrored && lastMirrorSince < time.Hour*12 {
+		writeLine(w, fmt.Sprintf("✅ Image already mirrored. Last mirror was %s ago", lastMirrorSince))
+	} else {
+		log.Printf("Image %s is not mirrored yet\n %s", image, lastMirrorSince)
+		id := randID()
+		err := server.gh.LaunchGithubAction(image, id)
+		if err != nil {
+			httpError(w, http.StatusInternalServerError, fmt.Sprintf("❌ Failed to launch GitHub action: %v", err))
+			return
+		}
+		writeLine(w, "🚀 Launched github action workflow")
+		if err := server.gh.FollowWorkflowRun(makeStatusWriter(w), id); err != nil {
+			httpError(w, http.StatusInternalServerError, fmt.Sprintf("❌ Failed to follow workflow run: %v", err))
+			return
+		}
 	}
 
+	_, remainder, tag := splitDockerImageParts(image)
+	imageToPull := "ghcr.io/1mgr/" + shortenRemainder(remainder) + ":" + tag
+
 	writeLine(w, "ℹ️ Pull your image from the mirror:")
-	writeLine(w, "docker pull ghcr.io/1mgr/"+image)
+	writeLine(w, "docker pull "+imageToPull)
 }
 
 func randID() string {

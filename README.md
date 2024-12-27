@@ -23,4 +23,23 @@ Since dockerhub is getting slow and unreliable with their [rate limits](https://
 
 ## Disclaimer
 
-All images are mirrored from dockerhub as is, we do not own any of them.
+This project was created as a personal tool and is not intended for production use. While it may be useful for self-hosters and individuals, please note:
+
+* The service is public-facing and may be prone to abuse (e.g., DDOS, resource exhaustion).
+* It relies on GitHub Actions and Packages, which are free for open-source projects but subject to limits.
+* Only public Docker images are used, with no authentication. Abuse could impact GitHub Action runner IPs.
+* Security measures are in place, but risks remain due to the open-source nature of the project.
+* All images are mirrored from dockerhub as is, we do not own any of them.
+
+Use responsibly and implement additional safeguards if needed. Feedback and contributions are welcome!
+
+## Limits
+
+### RPS
+
+There is a limit of 10 requests per 10 seconds per IP.
+After exceeding the limit, the service will return a 429 status code with message `error code: 1015`.
+
+### Mirror of existing images
+
+The service will only mirror images that are not mirrored yet or the mirror is older than 12 hours.

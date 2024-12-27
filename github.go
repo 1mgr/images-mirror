@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 )
@@ -16,6 +18,7 @@ type StatusWriter interface {
 type GithubClientConfig struct {
 	Token         string
 	OrgRepo       string
+	Org           string
 	Timeout       time.Duration
 	CheckInterval time.Duration
 }
@@ -51,6 +54,46 @@ func (g *GitHubClient) callAPI(method, url string, body io.Reader) (*http.Respon
 	}
 
 	return resp, nil
+}
+
+func (g *GitHubClient) IsImageAlreadyMirrored(image string) (bool, time.Duration) {
+	_, remainder, tag := splitDockerImageParts(image)
+	url := fmt.Sprintf("https://api.github.com/orgs/%s/packages/container/%s/versions", g.Config.Org, shortenRemainder(remainder))
+	resp, err := g.callAPI("GET", url, nil)
+	if err != nil {
+		log.Printf("failed to call api for checking mirrored image: %v", err)
+		return false, 0
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return false, 0
+	}
+
+	var versions []struct {
+		UpdatedAt time.Time `json:"updated_at"`
+		Metadata  struct {
+			Container struct {
+				Tags []string `json:"tags"`
+			} `json:"container"`
+		} `json:"metadata"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&versions); err != nil {
+		log.Printf("failed to decode response json: %v", err)
+		return false, 0
+	}
+
+	if len(versions) == 0 {
+		return false, 0
+	}
+
+	for _, version := range versions {
+		if slices.Contains(version.Metadata.Container.Tags, tag) {
+			return true, time.Since(version.UpdatedAt)
+		}
+	}
+
+	return false, 0
 }
 
 func (g *GitHubClient) LaunchGithubAction(image, id string) error {
