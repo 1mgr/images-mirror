@@ -1,3 +1,9 @@
+## v0.3.0 (2024-12-27)
+
+### Feat
+
+- add checker to limit mirror of image once in 12 hours
+
 ## v0.2.2 (2024-12-07)
 
 ### Fix
