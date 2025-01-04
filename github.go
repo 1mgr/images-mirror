@@ -58,7 +58,9 @@ func (g *GitHubClient) callAPI(method, url string, body io.Reader) (*http.Respon
 
 func (g *GitHubClient) IsImageAlreadyMirrored(image string) (bool, time.Duration) {
 	_, remainder, tag := splitDockerImageParts(image)
-	url := fmt.Sprintf("https://api.github.com/orgs/%s/packages/container/%s/versions", g.Config.Org, shortenRemainder(remainder))
+	container := shortenRemainder(remainder)
+	container = strings.ReplaceAll(container, "/", "%2F")
+	url := fmt.Sprintf("https://api.github.com/orgs/%s/packages/container/%s/versions", g.Config.Org, container)
 	resp, err := g.callAPI("GET", url, nil)
 	if err != nil {
 		log.Printf("failed to call api for checking mirrored image: %v", err)
@@ -87,13 +89,21 @@ func (g *GitHubClient) IsImageAlreadyMirrored(image string) (bool, time.Duration
 		return false, 0
 	}
 
+	var lastTimestamp time.Time
+
 	for _, version := range versions {
 		if slices.Contains(version.Metadata.Container.Tags, tag) {
-			return true, time.Since(version.UpdatedAt)
+			if lastTimestamp.Before(version.UpdatedAt) {
+				lastTimestamp = version.UpdatedAt
+			}
 		}
 	}
 
-	return false, 0
+	if lastTimestamp.IsZero() {
+		return false, 0
+	}
+
+	return true, time.Since(lastTimestamp)
 }
 
 func (g *GitHubClient) LaunchGithubAction(image, id string) error {

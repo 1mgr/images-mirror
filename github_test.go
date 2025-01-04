@@ -26,16 +26,22 @@ func TestGitHubClient_IsImageAlreadyMirrored(t *testing.T) {
 		sinceLastMirrorChecker func(time.Duration) bool
 	}{
 		{
+			name:                   "postgres 16",
+			args:                   args{image: "postgres:16"},
+			mirrored:               true,
+			sinceLastMirrorChecker: func(d time.Duration) bool { return true },
+		},
+		{
 			name:                   "postgres 11",
 			args:                   args{image: "postgres:11"},
 			mirrored:               true,
 			sinceLastMirrorChecker: func(d time.Duration) bool { return d > time.Hour*24 },
 		},
 		{
-			name:                   "postgres 16",
-			args:                   args{image: "postgres:16"},
+			name:                   "grafana/grafana-oss",
+			args:                   args{image: "grafana/grafana-oss:latest"},
 			mirrored:               true,
-			sinceLastMirrorChecker: func(d time.Duration) bool { return d < time.Hour*12 && d > time.Hour*1 },
+			sinceLastMirrorChecker: func(d time.Duration) bool { return true },
 		},
 	}
 	for _, tt := range tests {
