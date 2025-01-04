@@ -1,3 +1,9 @@
+## v0.3.1 (2025-01-04)
+
+### Fix
+
+- mirror check function correct handling of slashes
+
 ## v0.3.0 (2024-12-27)
 
 ### Feat
